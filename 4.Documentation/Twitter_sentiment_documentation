@@ -1,0 +1,502 @@
+TWITTER ENTITY SENTIMENT ANALYSIS
+Project Documentation
+Author: Sadeep Dudekula
+Date: June 2026
+Tools: Microsoft Excel | SQL Server (SSMS) | Power BI | GitHub
+
+================================================================
+TABLE OF CONTENTS
+================================================================
+1. Project Background
+2. Dataset Information
+3. Phase 1 - Data Collection
+4. Phase 2 - Data Cleaning (Excel)
+5. Phase 3 - SQL Analysis (SSMS)
+6. Phase 4 - Dashboard (Power BI)
+7. Key Findings Summary
+8. Recommendations
+================================================================
+
+
+================================================================
+1. PROJECT BACKGROUND
+================================================================
+
+This project performs entity-level sentiment analysis on Twitter
+data. The dataset contains tweets about various brands, games,
+and companies, each labeled with a sentiment class:
+Positive, Negative, Neutral, or Irrelevant.
+
+The goal is to identify:
+- Which entities are most discussed on Twitter
+- Which entities attract the most negative sentiment
+- Which entities have the highest positive sentiment
+- Overall sentiment distribution across all tweets
+
+This project is part of my Data Analytics portfolio and
+demonstrates end-to-end data analysis skills using Excel,
+SQL Server, and Power BI.
+
+
+================================================================
+2. DATASET INFORMATION
+================================================================
+
+Source        : Kaggle
+Dataset Name  : Twitter Entity Sentiment Analysis
+Dataset URL   : https://www.kaggle.com/datasets/jp797498e/twitter-entity-sentiment-analysis
+License       : CC0 Public Domain
+File Used     : twitter_training.csv
+
+Original Columns (no headers in raw file):
+- Column A : Tweet_ID   (numeric identifier)
+- Column B : Entity     (brand/game/company name)
+- Column C : Sentiment  (Positive/Negative/Neutral/Irrelevant)
+- Column D : Tweet_Text (raw tweet content)
+
+Original Row Count : 74,683
+Final Clean Count  : 69,577
+Total Entities     : 32
+
+
+================================================================
+3. PHASE 1 - DATA COLLECTION
+================================================================
+
+STEP 1: Download Dataset
+------------------------
+1. Go to https://www.kaggle.com/datasets/jp797498e/twitter-entity-sentiment-analysis
+2. Click Download
+3. Extract the ZIP file
+4. Locate twitter_training.csv
+
+STEP 2: Open in Excel
+---------------------
+1. Open Microsoft Excel
+2. File > Open > Browse > select twitter_training.csv
+3. File opens with no column headers
+4. Verify 4 columns are present (A, B, C, D)
+5. Note: Raw file has 74,683 rows of data
+
+
+================================================================
+4. PHASE 2 - DATA CLEANING (EXCEL)
+================================================================
+
+STEP 1: Add Column Headers
+--------------------------
+1. Right-click on Row 1 > Insert (adds blank row at top)
+2. Type the following headers:
+   - Cell A1: Tweet_ID
+   - Cell B1: Entity
+   - Cell C1: Sentiment
+   - Cell D1: Tweet_Text
+3. Save the file
+
+STEP 2: Check Dataset Size
+--------------------------
+1. Press Ctrl + End to jump to last cell
+2. Note the last row number
+3. Subtract 1 for header = total data rows
+   Result: 74,682 data rows confirmed
+
+STEP 3: Check for Blank Values
+-------------------------------
+1. Select all data (Ctrl + A)
+2. Home > Find & Select > Go To Special > Blanks
+3. Result: 1 blank cell found in Tweet_Text column (row 60)
+4. Delete that row: Right-click > Delete Row
+   Result: 74,682 rows remaining
+
+STEP 4: Verify Sentiment Values
+--------------------------------
+1. Click on Column C header
+2. Data > Filter > click dropdown on Sentiment column
+3. Confirm only 4 values exist:
+   - Positive
+   - Negative
+   - Neutral
+   - Irrelevant
+4. No unexpected values found
+
+STEP 5: Count Sentiment Distribution
+--------------------------------------
+1. In an empty cell (F2), type: =COUNTIF(C:C,"Positive")
+2. In F3: =COUNTIF(C:C,"Negative")
+3. In F4: =COUNTIF(C:C,"Neutral")
+4. In F5: =COUNTIF(C:C,"Irrelevant")
+
+Results before cleaning:
+- Positive   : 20,832
+- Negative   : 22,542
+- Neutral    : 18,318
+- Irrelevant : 12,990
+- Total      : 74,682
+
+STEP 6: Add Tweet Length Helper Column
+----------------------------------------
+1. Click on Cell E1, type header: Tweet_Length
+2. In Cell E2, type: =LEN(D2)
+3. Double-click fill handle to apply to all rows
+4. This calculates character count for each tweet
+
+STEP 7: Remove Short/Junk Tweets
+----------------------------------
+1. Click Data > Filter on column E (Tweet_Length)
+2. Number Filters > Less Than > enter: 5
+3. Review filtered rows carefully
+4. Confirm they are junk (symbols, single letters, numbers only)
+   Examples found: ".. [", ".. 45", "a", "to", "and"
+5. Select all visible filtered rows (except header)
+6. Right-click > Delete Row
+7. Clear filter: Data > Clear
+   Result: Approximately 69,639 rows remaining
+
+STEP 8: Remove <unk> Rows
+---------------------------
+1. Data > Filter on column D (Tweet_Text)
+2. Text Filters > Contains > type: <unk>
+3. Select all visible filtered rows
+4. Right-click > Delete Row
+5. Clear filter
+   Result: 65,592 rows remaining
+
+STEP 9: Delete Helper Column
+------------------------------
+1. Right-click on Column E header
+2. Select Delete
+3. Column E (Tweet_Length) removed
+   Final columns: Tweet_ID, Entity, Sentiment, Tweet_Text
+
+STEP 10: Save Final Clean File
+--------------------------------
+1. File > Save As
+2. Navigate to your project folder
+3. File name: twitter_training_cleaned
+4. Save as type: CSV UTF-8 (Comma delimited)
+5. Click Save > Yes to confirm format
+
+Final Sentiment Distribution After Cleaning:
+- Positive   : 19,032
+- Negative   : 21,130
+- Neutral    : 17,191
+- Irrelevant : 12,238
+- Total      : 65,592
+
+
+================================================================
+5. PHASE 3 - SQL ANALYSIS (SSMS)
+================================================================
+
+STEP 1: Create Database
+------------------------
+1. Open SQL Server Management Studio (SSMS)
+2. Connect to your server (BENZ\SQLEXPRESS)
+3. Click New Query
+4. Run the following:
+
+   CREATE DATABASE TwittersentimentDB;
+
+5. Press F5 to execute
+6. Confirm: "Commands completed successfully"
+
+STEP 2: Import CSV File
+------------------------
+1. In Object Explorer, expand Databases
+2. Right-click TwittersentimentDB
+3. Tasks > Import Flat File
+4. Click Next
+5. Browse and select twitter_training_cleaned.csv
+6. Table name: twitter_tweets
+7. Click Next
+
+STEP 3: Set Column Data Types
+-------------------------------
+On the Modify Columns screen, set:
+- Tweet_id  : int          | Primary Key: No | Allow Nulls: No
+- Entity    : nvarchar(50) | Primary Key: No | Allow Nulls: No
+- Sentiment : nvarchar(50) | Primary Key: No | Allow Nulls: No
+- Tweet_text: varchar(MAX) | Primary Key: No | Allow Nulls: No
+
+Click Next > Finish
+
+STEP 4: Verify Import
+----------------------
+Run this query to confirm row count:
+
+   USE TwittersentimentDB;
+   SELECT COUNT(*) AS Total_Rows FROM twitter_tweets;
+
+Expected result: approximately 69,577 rows
+
+STEP 5: Final SQL Cleaning
+---------------------------
+Remove any remaining short/junk tweets:
+
+   DELETE FROM twitter_tweets
+   WHERE LEN(Tweet_text) < 5;
+
+Remove any remaining <unk> rows:
+
+   DELETE FROM twitter_tweets
+   WHERE Tweet_text = '<unk>';
+
+Verify final count:
+
+   SELECT COUNT(*) AS Total_Rows FROM twitter_tweets;
+
+Final Result: 69,577 clean rows
+
+STEP 6: Analysis Query 1 - Sentiment Distribution
+---------------------------------------------------
+   SELECT sentiment,
+          COUNT(*) AS total_rows
+   FROM twitter_tweets
+   GROUP BY sentiment;
+
+Result:
+- Negative   : 21,128
+- Positive   : 19,026
+- Neutral    : 17,186
+- Irrelevant : 12,237
+
+STEP 7: Analysis Query 2 - Top 10 Most Discussed Entities
+-----------------------------------------------------------
+   SELECT TOP 10
+          entity,
+          COUNT(*) AS tweet_count
+   FROM twitter_tweets
+   GROUP BY entity
+   ORDER BY tweet_count DESC;
+
+Top Result: Verizon (2,267 tweets)
+
+STEP 8: Analysis Query 3 - Sentiment Breakdown Per Entity
+----------------------------------------------------------
+   SELECT entity,
+          sentiment,
+          COUNT(*) AS total
+   FROM twitter_tweets
+   GROUP BY entity, sentiment;
+
+STEP 9: Analysis Query 4 - Top 10 Most Negative Entities
+---------------------------------------------------------
+   SELECT TOP 10
+          entity,
+          COUNT(*) AS negative_count
+   FROM twitter_tweets
+   WHERE sentiment = 'Negative'
+   GROUP BY entity
+   ORDER BY negative_count DESC;
+
+Top Result: MaddenNFL (1,630 negative tweets)
+
+STEP 10: Analysis Query 5 - Positive Percentage Per Entity
+-----------------------------------------------------------
+   SELECT TOP 10
+       entity,
+       COUNT(*) AS total_tweets,
+       SUM(CASE WHEN sentiment = 'Positive' THEN 1 ELSE 0 END) AS positive_count,
+       CAST(SUM(CASE WHEN sentiment = 'Positive' THEN 1 ELSE 0 END) * 100.0
+       / COUNT(*) AS DECIMAL(5,2)) AS positive_pct
+   FROM twitter_tweets
+   GROUP BY entity
+   ORDER BY positive_pct DESC;
+
+Top Result: AssassinsCreed (64.01% positive)
+
+STEP 11: Analysis Query 6 - Negative Percentage Per Entity
+-----------------------------------------------------------
+   SELECT TOP 10
+       entity,
+       COUNT(*) AS total_tweets,
+       SUM(CASE WHEN sentiment = 'Negative' THEN 1 ELSE 0 END) AS negative_count,
+       CAST(SUM(CASE WHEN sentiment = 'Negative' THEN 1 ELSE 0 END) * 100.0
+       / COUNT(*) AS DECIMAL(5,2)) AS negative_pct
+   FROM twitter_tweets
+   GROUP BY entity
+   ORDER BY negative_pct DESC;
+
+Top Result: MaddenNFL (72.03% negative)
+
+STEP 12: Save SQL Queries
+--------------------------
+1. File > Save As
+2. Name: twitter_analysis_queries.sql
+3. Save to your project SQL folder
+
+
+================================================================
+6. PHASE 4 - DASHBOARD (POWER BI)
+================================================================
+
+STEP 1: Load Data into Power BI
+---------------------------------
+1. Open Power BI Desktop
+2. Home > Get Data > Text/CSV
+3. Browse and select twitter_training_cleaned.csv
+4. Preview data > click Load
+5. Confirm all 4 columns appear in Data pane:
+   Entity, Sentiment, Tweet_id, Tweet_text
+
+STEP 2: Create DAX Measures
+-----------------------------
+Right-click table in Data pane > New Measure
+
+Measure 1 - Positive %:
+   Positive % =
+   DIVIDE(
+       CALCULATE(COUNTROWS('twitter_trainning_cleaned'),
+       'twitter_trainning_cleaned'[Sentiment] = "Positive"),
+       COUNTROWS('twitter_trainning_cleaned')
+   )
+   (Set format to Percentage in Measure tools ribbon)
+
+Measure 2 - Negative %:
+   Negative % =
+   DIVIDE(
+       CALCULATE(COUNTROWS('twitter_trainning_cleaned'),
+       'twitter_trainning_cleaned'[Sentiment] = "Negative"),
+       COUNTROWS('twitter_trainning_cleaned')
+   )
+   (Set format to Percentage in Measure tools ribbon)
+
+Measure 3 - Total Entities:
+   Total Entities = DISTINCTCOUNT('twitter_trainning_cleaned'[Entity])
+
+STEP 3: Add Dashboard Title
+-----------------------------
+1. Insert > Text Box
+2. Type: TWITTER SENTIMENT ANALYSIS DASHBOARD
+3. Font: Segoe UI Bold, size 24
+4. Position at top of canvas
+
+STEP 4: Add KPI Cards
+----------------------
+Add 4 Card visuals in a row:
+
+Card 1 - Total Tweets:
+- Visual: Card
+- Value: Tweet_id > Count
+- Label: Total Tweets
+
+Card 2 - Positive %:
+- Visual: Card
+- Value: Positive % measure
+
+Card 3 - Negative %:
+- Visual: Card
+- Value: Negative % measure
+
+Card 4 - Total Entities:
+- Visual: Card
+- Value: Total Entities measure
+
+STEP 5: Add Sentiment Donut Chart
+-----------------------------------
+1. Click Donut Chart visual
+2. Legend: Sentiment column
+3. Values: Tweet_id > Count
+4. Title: Sentiment Distribution
+
+STEP 6: Add Top 10 Most Discussed Entities Bar Chart
+------------------------------------------------------
+1. Click Clustered Bar Chart visual
+2. Y-axis: Entity
+3. X-axis: Tweet_id > Count
+4. Filters pane > Entity > Top N > 10 > by Count of Tweet_id
+5. Title: Top 10 Most Discussed Entity
+
+STEP 7: Add Top 10 Most Negative Entities Bar Chart
+-----------------------------------------------------
+1. Click Clustered Bar Chart visual
+2. Y-axis: Entity
+3. X-axis: Tweet_id > Count
+4. Filters pane:
+   - Sentiment = Negative
+   - Entity Top N = 10 by Count of Tweet_id
+5. Title: Top 10 Negative Entity
+
+STEP 8: Add Top 10 Most Positive Entities Bar Chart
+-----------------------------------------------------
+1. Click Clustered Bar Chart visual
+2. Y-axis: Entity
+3. X-axis: Tweet_id > Count
+4. Filters pane:
+   - Sentiment = Positive
+   - Entity Top N = 10 by Count of Tweet_id
+5. Title: Top 10 Positive Entity
+
+STEP 9: Align All Visuals
+---------------------------
+1. View > Gridlines > On
+2. View > Snap to Grid > On
+3. Select all KPI cards > Format > Align Top
+4. Set equal width for all cards
+5. Arrange 3 bar charts in bottom row
+
+STEP 10: Save Dashboard
+-------------------------
+1. File > Save As
+2. Name: twitter_sentiment_dashboard
+3. Save as .pbix file to Dashboard folder
+
+
+================================================================
+7. KEY FINDINGS SUMMARY
+================================================================
+
+Finding 1: Negative Sentiment Dominates
+- 30.4% of all tweets are Negative
+- Negative is the highest sentiment class overall
+
+Finding 2: Sports Games Are Most Criticized
+- MaddenNFL: 72.03% negative (1,630 tweets)
+- NBA2K: 63.65% negative (1,420 tweets)
+- FIFA: 50.37% negative (1,094 tweets)
+
+Finding 3: AssassinsCreed Is Most Loved
+- AssassinsCreed: 64.01% positive (1,348 tweets)
+- Borderlands: 43.66% positive
+- Cyberpunk2077: 41.35% positive
+
+Finding 4: Verizon Most Discussed
+- Verizon leads all entities with 2,267 total tweets
+- 46.10% negative sentiment despite high discussion volume
+
+Finding 5: Gaming Dominates Twitter Conversations
+- 8 out of 10 most discussed entities are gaming brands
+- Gaming generates both highest positive and negative reactions
+
+
+================================================================
+8. RECOMMENDATIONS
+================================================================
+
+1. MaddenNFL & NBA2K: Prioritize bug fixes, microtransaction
+   transparency, and community feedback programs to reverse
+   the overwhelming 72% and 63.65% negative sentiment.
+
+2. Verizon: Improve social media customer service response
+   times and proactive communication to reduce the 46.10%
+   negative sentiment despite high brand visibility.
+
+3. AssassinsCreed: Leverage 64% positive sentiment through
+   targeted marketing campaigns and community engagement
+   events to maintain brand goodwill.
+
+4. FIFA: Investigate Ultimate Team pay-to-win mechanics
+   as the likely driver of 50.37% negative sentiment.
+
+5. All Brands: Monitor irrelevant tweet volume (17.59%)
+   and use targeted hashtags to attract more genuine
+   brand conversations on Twitter.
+
+
+================================================================
+END OF DOCUMENTATION
+================================================================
+Author    : Amanaganti Venkateswarlu
+Project   : Twitter Entity Sentiment Analysis
+Date      : June 2026
+================================================================
