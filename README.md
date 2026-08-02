@@ -148,7 +148,7 @@ This analysis of 69,577 tweets across 32 entities reveals that negative sentimen
 
 I'm Amanaganti Venkateswarlu, a B.Tech (AIML) graduate and aspiring Data Analyst from India. This is part of my data analytics portfolio showcasing skills in Excel, Power BI, SQL.
 
-🔗 [LinkedIn](https://www.linkedin.com/in/sadeep-dudekula-377911272?utm_source=share_via&utm_content=profile&utm_medium=member_android)
+🔗 [LinkedIn](https://www.linkedin.com/in/amanaganti-venkateswarlu-520404200)
 
 ---
 
